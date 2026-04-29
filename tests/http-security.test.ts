@@ -51,5 +51,14 @@ describe("http security config", () => {
         "MCP_HTTP_ALLOWED_ORIGINS"
       );
     });
+
+    withCleanEnv(() => {
+      process.env.MCP_HTTP_HARDEN = "true";
+      process.env.MCP_HTTP_ALLOWED_ORIGINS = "https://app.example";
+
+      expect(() => validateHttpSecurityConfig(getHttpSecurityConfig())).toThrow(
+        "MCP_HTTP_AUTH_TOKEN"
+      );
+    });
   });
 });

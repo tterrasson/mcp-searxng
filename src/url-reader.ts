@@ -82,6 +82,19 @@ function isPrivateIPv6(hostname: string): boolean {
   const mapped = addr.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
   if (mapped) return isPrivateIpv4(mapped[1]);
 
+  const mappedHex = addr.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (mappedHex) {
+    const high = parseInt(mappedHex[1], 16);
+    const low = parseInt(mappedHex[2], 16);
+    const ipv4 = [
+      (high >> 8) & 0xff,
+      high & 0xff,
+      (low >> 8) & 0xff,
+      low & 0xff,
+    ].join(".");
+    return isPrivateIpv4(ipv4);
+  }
+
   return false;
 }
 

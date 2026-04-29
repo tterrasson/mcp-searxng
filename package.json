@@ -37,7 +37,7 @@
     "scripts": {
         "build": "tsc && chmod +x dist/*.js",
         "watch": "bun --watch src/index.ts",
-        "test": "bun test tests",
+        "test": "bun test tests --reporter=dots --only-failures",
         "test:coverage": "bun test --coverage tests",
         "bootstrap": "bun install && bun run build",
         "inspector": "DANGEROUSLY_OMIT_AUTH=true bunx @modelcontextprotocol/inspector bun dist/index.js",
