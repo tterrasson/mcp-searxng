@@ -153,8 +153,8 @@ export function createMcpServer(): McpServer {
         throw new Error(`Unknown tool: ${name}`);
       }
     } catch (error) {
-      logMessage(mcpServer, "error", `Tool execution error: ${error instanceof Error ? error.message : String(error)}`, { 
-        tool: name, 
+      logMessage(mcpServer, "error", `Tool execution error: ${error instanceof Error ? error.message : String(error)}`, {
+        tool: name,
         args: args,
         error: error instanceof Error ? error.stack : String(error)
       });
@@ -247,7 +247,7 @@ async function main() {
 
     console.log(`Starting HTTP transport on port ${port}`);
     const app = await createHttpServer(createMcpServer);
-    
+
     const httpServer = app.listen(port, () => {
       console.log(`HTTP server listening on port ${port}`);
       console.log(`Health check: http://localhost:${port}/health`);
@@ -279,10 +279,10 @@ async function main() {
       }
       console.error("📡 Waiting for MCP client connection via STDIO...\n");
     }
-    
+
     const transport = new StdioServerTransport();
     await mcpServer.connect(transport);
-    
+
     // Log after connection is established
     logMessage(mcpServer, "info", `MCP SearXNG Server v${packageVersion} connected via STDIO`);
     logMessage(mcpServer, "info", `Log level: ${getCurrentLogLevel()}`);

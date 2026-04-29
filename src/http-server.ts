@@ -26,7 +26,7 @@ export async function createHttpServer(
   validateHttpSecurityConfig(security);
 
   app.use(express.json());
-  
+
   // Add CORS support for web clients
   app.use(cors({
     origin: (origin, callback) => {
@@ -200,7 +200,7 @@ export async function createHttpServer(
 
   // Health check endpoint
   app.get('/health', (_req, res) => {
-    res.json({ 
+    res.json({
       status: 'healthy',
       server: 'ihor-sokoliuk/mcp-searxng',
       version: packageVersion,

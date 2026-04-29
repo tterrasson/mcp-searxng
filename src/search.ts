@@ -22,7 +22,7 @@ export async function performWebSearch(
   safesearch?: number
 ) {
   const startTime = Date.now();
-  
+
   // Build detailed log message with all parameters
   const searchParams = [
     `page ${pageno}`,
@@ -30,9 +30,9 @@ export async function performWebSearch(
     time_range ? `time: ${time_range}` : null,
     safesearch ? `safesearch: ${safesearch}` : null
   ].filter(Boolean).join(", ");
-  
+
   logMessage(mcpServer, "info", `Starting web search: "${query}" (${searchParams})`);
-  
+
   const validationError = validateEnvironment();
   if (validationError) {
     logMessage(mcpServer, "error", "Configuration invalid");

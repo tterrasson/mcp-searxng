@@ -3,13 +3,13 @@ import { getConnectOptions } from "./tls-config.js";
 
 /**
  * Checks if a target URL should bypass the proxy based on NO_PROXY environment variable.
- * 
+ *
  * @param targetUrl - The URL to check against NO_PROXY rules
  * @returns true if the URL should bypass the proxy, false otherwise
  */
 function shouldBypassProxy(targetUrl: string): boolean {
   const noProxy = process.env.NO_PROXY || process.env.no_proxy;
-  
+
   if (!noProxy) {
     return false;
   }
@@ -206,8 +206,8 @@ export function createProxyAgent(targetUrl?: string, type?: ProxyType): ProxyAge
   }
 
   // Reconstruct base proxy URL preserving credentials
-  const auth = parsedProxyUrl.username ? 
-    (parsedProxyUrl.password ? `${parsedProxyUrl.username}:${parsedProxyUrl.password}@` : `${parsedProxyUrl.username}@`) : 
+  const auth = parsedProxyUrl.username ?
+    (parsedProxyUrl.password ? `${parsedProxyUrl.username}:${parsedProxyUrl.password}@` : `${parsedProxyUrl.username}@`) :
     '';
   const normalizedProxyUrl = `${parsedProxyUrl.protocol}//${auth}${parsedProxyUrl.host}`;
 

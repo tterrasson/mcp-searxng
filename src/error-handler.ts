@@ -51,20 +51,20 @@ function getTLSRemediationMessage(): string {
 
 export function createNetworkError(error: any, context: ErrorContext): MCPSearXNGError {
   const target = context.searxngUrl ? 'SearXNG server' : 'website';
-  
+
   if (error.code === 'ECONNREFUSED') {
     return new MCPSearXNGError(`🌐 Connection Error: ${target} is not responding (${context.url})`);
   }
-  
+
   if (error.code === 'ENOTFOUND' || error.code === 'EAI_NONAME') {
     const hostname = context.url ? new URL(context.url).hostname : 'unknown';
     return new MCPSearXNGError(`🌐 DNS Error: Cannot resolve hostname "${hostname}"`);
   }
-  
+
   if (error.code === 'ETIMEDOUT') {
     return new MCPSearXNGError(`🌐 Timeout Error: ${target} is too slow to respond`);
   }
-  
+
   if (isTLSError(error)) {
     const causeCode = error?.cause?.code || error?.code || 'CERT_ERROR';
     return new MCPSearXNGError(
@@ -72,40 +72,40 @@ export function createNetworkError(error: any, context: ErrorContext): MCPSearXN
       getTLSRemediationMessage()
     );
   }
-  
+
   // For generic fetch failures, provide root cause guidance
   const errorMsg = error.message || error.code || 'Connection failed';
   if (errorMsg === 'fetch failed' || errorMsg === 'Connection failed') {
-    const guidance = context.searxngUrl 
+    const guidance = context.searxngUrl
       ? 'Check if the SEARXNG_URL is correct and the SearXNG server is available'
       : 'Check if the website URL is accessible';
     return new MCPSearXNGError(`🌐 Network Error: ${errorMsg}. ${guidance}`);
   }
-  
+
   return new MCPSearXNGError(`🌐 Network Error: ${errorMsg}`);
 }
 
 export function createServerError(status: number, statusText: string, responseBody: string, context: ErrorContext): MCPSearXNGError {
   const target = context.searxngUrl ? 'SearXNG server' : 'Website';
-  
+
   if (status === 403) {
     const reason = context.searxngUrl ? 'Authentication required or IP blocked' : 'Access blocked (bot detection or geo-restriction)';
     return new MCPSearXNGError(`🚫 ${target} Error (${status}): ${reason}`);
   }
-  
+
   if (status === 404) {
     const reason = context.searxngUrl ? 'Search endpoint not found' : 'Page not found';
     return new MCPSearXNGError(`🚫 ${target} Error (${status}): ${reason}`);
   }
-  
+
   if (status === 429) {
     return new MCPSearXNGError(`🚫 ${target} Error (${status}): Rate limit exceeded`);
   }
-  
+
   if (status >= 500) {
     return new MCPSearXNGError(`🚫 ${target} Error (${status}): Internal server error`);
   }
-  
+
   return new MCPSearXNGError(`🚫 ${target} Error (${status}): ${statusText}`);
 }
 
@@ -156,7 +156,7 @@ export function createUnexpectedError(error: any, context: ErrorContext): MCPSea
 
 export function validateEnvironment(): string | null {
   const issues: string[] = [];
-  
+
   const searxngUrl = process.env.SEARXNG_URL;
   if (!searxngUrl) {
     issues.push("SEARXNG_URL not set");
@@ -173,7 +173,7 @@ export function validateEnvironment(): string | null {
 
   const authUsername = process.env.AUTH_USERNAME;
   const authPassword = process.env.AUTH_PASSWORD;
-  
+
   if (authUsername && !authPassword) {
     issues.push("AUTH_USERNAME set but AUTH_PASSWORD missing");
   } else if (!authUsername && authPassword) {

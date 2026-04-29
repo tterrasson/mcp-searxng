@@ -93,7 +93,7 @@ Args: {"query": "latest AI developments", "time_range": "day"}
 
 ### Read a specific article
 \`\`\`
-Tool: web_url_read  
+Tool: web_url_read
 Args: {"url": "https://example.com/article"}
 \`\`\`
 

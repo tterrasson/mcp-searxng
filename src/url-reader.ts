@@ -217,7 +217,7 @@ export async function fetchAndConvertToMarkdown(
     logMessage(mcpServer, "info", `Processed cached URL: ${url} (${result.length} chars in ${duration}ms)`);
     return result;
   }
-  
+
   // Validate URL format
   let parsedUrl: URL;
   try {
@@ -328,7 +328,7 @@ export async function fetchAndConvertToMarkdown(
       logMessage(mcpServer, "error", `Error fetching URL: ${url} - ${error.message}`);
       throw error;
     }
-    
+
     // Catch any unexpected errors
     logMessage(mcpServer, "error", `Unexpected error fetching URL: ${url}`, error);
     const context: ErrorContext = { url };
