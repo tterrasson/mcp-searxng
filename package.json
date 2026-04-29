@@ -37,12 +37,11 @@
     "scripts": {
         "build": "tsc && chmod +x dist/*.js",
         "watch": "bun --watch src/index.ts",
-        "test": "SEARXNG_URL=https://test-searx.example.com bun __tests__/run-all.ts",
-        "test:coverage": "SEARXNG_URL=https://test-searx.example.com bun --coverage __tests__/run-all.ts",
+        "test": "bun test tests",
+        "test:coverage": "bun test --coverage tests",
         "bootstrap": "bun install && bun run build",
         "inspector": "DANGEROUSLY_OMIT_AUTH=true bunx @modelcontextprotocol/inspector bun dist/index.js",
-        "lint": "eslint src __tests__",
-        "postversion": "TAG=$(bun scripts/update-version.js | tail -1) && git add src/index.ts .mcp/server.json && git commit --amend --no-edit && git tag -f $TAG"
+        "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\""
     },
     "dependencies": {
         "@modelcontextprotocol/sdk": "1.29.0",

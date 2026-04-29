@@ -16,7 +16,7 @@ export default [
   },
   // Test files: parse without project (no type-aware rules)
   {
-    files: ['__tests__/**/*.ts'],
+    files: ['tests/**/*.ts'],
     languageOptions: {
       parser: tsParser,
     },

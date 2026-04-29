@@ -3,7 +3,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logMessage } from "./logging.js";
-import { packageVersion } from "./index.js";
 import {
   getHttpSecurityConfig,
   isOriginAllowed,
@@ -68,8 +67,7 @@ export async function createHttpServer(
       if (url.pathname === "/health" && req.method === "GET") {
         return Response.json({
           status: "healthy",
-          server: "ihor-sokoliuk/mcp-searxng",
-          version: packageVersion,
+          server: "tterrasson/mcp-searxng",
           transport: "http",
         });
       }

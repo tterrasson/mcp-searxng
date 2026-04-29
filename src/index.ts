@@ -19,12 +19,6 @@ import { fetchAndConvertToMarkdown } from "./url-reader.js";
 import { createConfigResource, createHelpResource } from "./resources.js";
 import { createHttpServer } from "./http-server.js";
 
-// Use a static version string that will be updated by the version script
-const packageVersion = "1.0.3";
-
-// Export the version for use in other modules
-export { packageVersion };
-
 // Type guard for URL reading args
 export function isWebUrlReadArgs(args: unknown): args is {
   url: string;
@@ -77,7 +71,7 @@ export function createMcpServer(): McpServer {
   const mcpServer = new McpServer(
     {
       name: "ihor-sokoliuk/mcp-searxng",
-      version: packageVersion,
+      version: process.env.npm_package_version ?? "0.0.0",
     },
     {
       capabilities: {
@@ -261,7 +255,7 @@ async function main() {
 
     // Show helpful message when running in terminal
     if (process.stdin.isTTY) {
-      console.error(`🔍 MCP SearXNG Server v${packageVersion} - Ready`);
+      console.error("🔍 MCP SearXNG Server - Ready");
       if (process.env.SEARXNG_URL) {
         console.error(`🌐 SearXNG URL: ${process.env.SEARXNG_URL}`);
       } else {
@@ -274,7 +268,7 @@ async function main() {
     await mcpServer.connect(transport);
 
     // Log after connection is established
-    logMessage(mcpServer, "info", `MCP SearXNG Server v${packageVersion} connected via STDIO`);
+    logMessage(mcpServer, "info", "MCP SearXNG Server connected via STDIO");
     logMessage(mcpServer, "info", `Log level: ${getCurrentLogLevel()}`);
     logMessage(mcpServer, "info", `Environment: ${process.env.NODE_ENV || 'development'}`);
     logMessage(mcpServer, "info", `SearXNG URL: ${process.env.SEARXNG_URL || 'not configured'}`);
