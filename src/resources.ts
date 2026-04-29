@@ -7,7 +7,7 @@ export function createConfigResource() {
 
   const config = {
     serverInfo: {
-      name: "ihor-sokoliuk/mcp-searxng",
+      name: "tterrasson/mcp-searxng",
       description: "MCP server for SearXNG integration"
     },
     environment: {

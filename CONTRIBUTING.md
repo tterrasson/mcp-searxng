@@ -7,15 +7,14 @@ We welcome contributions! Follow these guidelines to get started.
 ```bash
 git clone https://github.com/YOUR_USERNAME/mcp-searxng.git
 cd mcp-searxng
-git remote add upstream https://github.com/ihor-sokoliuk/mcp-searxng.git
-npm install
+bun install
 ```
 
 ## Development Workflow
 
 ```bash
-npm run watch   # Watch mode — rebuilds on file changes
-npm run build   # One-off build
+bun run watch   # Watch mode — rebuilds on file changes
+bun run build   # One-off build
 ```
 
 ## Coding Standards
@@ -31,9 +30,8 @@ npm run build   # One-off build
 ## Testing
 
 ```bash
-npm test                  # Run all tests
-npm run test:coverage     # Generate coverage report
-npm run test:watch        # Watch mode
+bun test tests            # Run all tests
+bun run test:coverage     # Generate coverage report
 ```
 
 ## Submitting a PR
@@ -41,10 +39,10 @@ npm run test:watch        # Watch mode
 ```bash
 git checkout -b feature/your-feature-name
 # Make changes in src/
-npm run build
-npm test
-npm run test:coverage
-npm run inspector
+bun run build
+bun test tests
+bun run test:coverage
+bun run inspector
 git commit -m "feat: description"
 git push origin feature/your-feature-name
 # Open a PR on GitHub

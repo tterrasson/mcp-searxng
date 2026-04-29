@@ -70,7 +70,7 @@ export function isWebUrlReadArgs(args: unknown): args is {
 export function createMcpServer(): McpServer {
   const mcpServer = new McpServer(
     {
-      name: "ihor-sokoliuk/mcp-searxng",
+      name: "tterrasson/mcp-searxng",
       version: process.env.npm_package_version ?? "0.0.0",
     },
     {

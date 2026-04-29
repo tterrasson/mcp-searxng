@@ -1,23 +1,26 @@
 # SearXNG MCP Server
 
-An [MCP server](https://modelcontextprotocol.io/introduction) that integrates the [SearXNG](https://docs.searxng.org) API, giving AI assistants web search capabilities.
+An [MCP server](https://modelcontextprotocol.io/introduction) that integrates the [SearXNG](https://docs.searxng.org) API, giving AI assistants web search and URL reading capabilities.
 
-[![https://nodei.co/npm/mcp-searxng.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/mcp-searxng.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/mcp-searxng)
-
-[![https://badgen.net/docker/pulls/isokoliuk/mcp-searxng](https://badgen.net/docker/pulls/isokoliuk/mcp-searxng)](https://hub.docker.com/r/isokoliuk/mcp-searxng)
-
-<a href="https://glama.ai/mcp/servers/0j7jjyt7m9"><img width="380" height="200" src="https://glama.ai/mcp/servers/0j7jjyt7m9/badge" alt="SearXNG Server MCP server" /></a>
+Repository: [github.com/tterrasson/mcp-searxng](https://github.com/tterrasson/mcp-searxng)
 
 ## Quick Start
 
-Add to your MCP client configuration (e.g. `claude_desktop_config.json`):
+Install dependencies and build the server with Bun:
+
+```bash
+bun install
+bun run build
+```
+
+Add the built server to your MCP client configuration, replacing the path with your local clone:
 
 ```json
 {
   "mcpServers": {
     "searxng": {
-      "command": "npx",
-      "args": ["-y", "mcp-searxng"],
+      "command": "bun",
+      "args": ["/absolute/path/to/mcp-searxng/dist/index.js"],
       "env": {
         "SEARXNG_URL": "YOUR_SEARXNG_INSTANCE_URL"
       }
@@ -26,150 +29,81 @@ Add to your MCP client configuration (e.g. `claude_desktop_config.json`):
 }
 ```
 
-Replace `YOUR_SEARXNG_INSTANCE_URL` with the URL of your SearXNG instance (e.g. `https://search.example.com`).
+Replace `YOUR_SEARXNG_INSTANCE_URL` with the URL of your SearXNG instance, for example `https://search.example.com`.
 
 ## Features
 
 - **Web Search**: General queries, news, articles, with pagination.
-- **URL Content Reading**: Advanced content extraction with pagination, section filtering, and heading extraction.
-- **Intelligent Caching**: URL content is cached with TTL (Time-To-Live) to improve performance and reduce redundant requests.
+- **URL Content Reading**: Content extraction with pagination, section filtering, and heading extraction.
+- **Intelligent Caching**: URL content is cached with TTL to improve performance and reduce redundant requests.
 - **Pagination**: Control which page of results to retrieve.
-- **Time Filtering**: Filter results by time range (day, month, year).
+- **Time Filtering**: Filter results by time range: day, month, or year.
 - **Language Selection**: Filter results by preferred language.
-- **Safe Search**: Control content filtering level for search results.
+- **Safe Search**: Control the search result filtering level.
 
 ## How It Works
 
-`mcp-searxng` is a standalone MCP server — a separate Node.js process that your AI assistant connects to for web search. It queries any SearXNG instance via its HTTP JSON API.
+`mcp-searxng` is a standalone MCP server that runs with Bun. Your AI assistant connects to it through the MCP protocol, and the server queries any SearXNG instance through its HTTP JSON API.
 
-> **Not a SearXNG plugin:** This project cannot be installed as a native SearXNG plugin. Point it at any existing SearXNG instance by setting `SEARXNG_URL`.
+> **Not a SearXNG plugin:** This project cannot be installed as a native SearXNG plugin. Point it at an existing SearXNG instance by setting `SEARXNG_URL`.
 
-```
-AI Assistant (e.g. Claude)
-        │  MCP protocol
-        ▼
-  mcp-searxng  (this project — Node.js process)
-        │  HTTP JSON API  (SEARXNG_URL)
-        ▼
+```text
+AI Assistant
+        |  MCP protocol
+        v
+  mcp-searxng  (this project, Bun process)
+        |  HTTP JSON API (SEARXNG_URL)
+        v
   SearXNG instance
 ```
 
 ## Tools
 
-- **web_search**
-  - Execute web searches with pagination
-  - Inputs:
-    - `query` (string): The search query. This string is passed to external search services.
-    - `pageno` (number, optional): Search page number, starts at 1 (default 1)
-    - `time_range` (string, optional): Filter results by time range - one of: "day", "month", "year" (default: none)
-    - `language` (string, optional): Language code for results (e.g., "en", "fr", "de") or "all" (default: "all")
-    - `safesearch` (number, optional): Safe search filter level (0: None, 1: Moderate, 2: Strict) (default: instance setting)
+### web_search
 
-- **web_url_read**
-  - Read and convert the content from a URL to markdown with advanced content extraction options
-  - Inputs:
-    - `url` (string): The URL to fetch and process
-    - `startChar` (number, optional): Starting character position for content extraction (default: 0)
-    - `maxLength` (number, optional): Maximum number of characters to return
-    - `section` (string, optional): Extract content under a specific heading (searches for heading text)
-    - `paragraphRange` (string, optional): Return specific paragraph ranges (e.g., '1-5', '3', '10-')
-    - `readHeadings` (boolean, optional): Return only a list of headings instead of full content
+Execute web searches with pagination.
+
+Inputs:
+
+- `query` (string): The search query. This string is passed to external search services.
+- `pageno` (number, optional): Search page number, starts at 1. Default: `1`.
+- `time_range` (string, optional): Filter results by time range. One of `day`, `month`, `year`.
+- `language` (string, optional): Language code for results, for example `en`, `fr`, `de`, or `all`. Default: `all`.
+- `safesearch` (number, optional): Safe search filter level, where `0` is none, `1` is moderate, and `2` is strict. Defaults to the SearXNG instance setting.
+
+### web_url_read
+
+Read and convert the content from a URL to Markdown.
+
+Inputs:
+
+- `url` (string): The URL to fetch and process.
+- `startChar` (number, optional): Starting character position for content extraction. Default: `0`.
+- `maxLength` (number, optional): Maximum number of characters to return.
+- `section` (string, optional): Extract content under a specific heading.
+- `paragraphRange` (string, optional): Return specific paragraph ranges, for example `1-5`, `3`, or `10-`.
+- `readHeadings` (boolean, optional): Return only a list of headings instead of full content.
 
 ## Installation
 
-<details>
-<summary>NPM (global install)</summary>
+This fork is intended to run with [Bun](https://bun.sh).
 
 ```bash
-npm install -g mcp-searxng
+git clone https://github.com/tterrasson/mcp-searxng.git
+cd mcp-searxng
+bun install
+bun run build
 ```
 
-```json
-{
-  "mcpServers": {
-    "searxng": {
-      "command": "mcp-searxng",
-      "env": {
-        "SEARXNG_URL": "YOUR_SEARXNG_INSTANCE_URL"
-      }
-    }
-  }
-}
-```
+Use `bun dist/index.js` in MCP clients after building.
 
-</details>
-
-<details>
-<summary>Docker</summary>
-
-**Pre-built image:**
+For local development, you can run the TypeScript entrypoint directly:
 
 ```bash
-docker pull isokoliuk/mcp-searxng:latest
+SEARXNG_URL=http://localhost:8080 bun src/index.ts
 ```
 
-```json
-{
-  "mcpServers": {
-    "searxng": {
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "-e", "SEARXNG_URL",
-        "isokoliuk/mcp-searxng:latest"
-      ],
-      "env": {
-        "SEARXNG_URL": "YOUR_SEARXNG_INSTANCE_URL"
-      }
-    }
-  }
-}
-```
-
-To pass additional env vars, add `-e VAR_NAME` to `args` and the variable to `env`.
-
-**Build locally:**
-
-```bash
-docker build -t mcp-searxng:latest -f Dockerfile .
-```
-
-Use the same config above, replacing `isokoliuk/mcp-searxng:latest` with `mcp-searxng:latest`.
-
-</details>
-
-<details>
-<summary>Docker Compose</summary>
-
-`docker-compose.yml`:
-
-```yaml
-services:
-  mcp-searxng:
-    image: isokoliuk/mcp-searxng:latest
-    stdin_open: true
-    environment:
-      - SEARXNG_URL=YOUR_SEARXNG_INSTANCE_URL
-      # Add optional variables as needed — see CONFIGURATION.md
-```
-
-MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "searxng": {
-      "command": "docker-compose",
-      "args": ["run", "--rm", "mcp-searxng"]
-    }
-  }
-}
-```
-
-</details>
-
-<details>
-<summary>HTTP Transport</summary>
+## HTTP Transport
 
 By default the server uses STDIO. Set `MCP_HTTP_PORT` to enable HTTP mode:
 
@@ -177,7 +111,8 @@ By default the server uses STDIO. Set `MCP_HTTP_PORT` to enable HTTP mode:
 {
   "mcpServers": {
     "searxng-http": {
-      "command": "mcp-searxng",
+      "command": "bun",
+      "args": ["/absolute/path/to/mcp-searxng/dist/index.js"],
       "env": {
         "SEARXNG_URL": "YOUR_SEARXNG_INSTANCE_URL",
         "MCP_HTTP_PORT": "3000"
@@ -187,16 +122,17 @@ By default the server uses STDIO. Set `MCP_HTTP_PORT` to enable HTTP mode:
 }
 ```
 
-**Endpoints:** `POST/GET/DELETE /mcp` (MCP protocol), `GET /health` (health check)
+Endpoints:
 
-**Test it:**
+- `POST/GET/DELETE /mcp`: MCP protocol
+- `GET /health`: health check
+
+Run it locally:
 
 ```bash
-MCP_HTTP_PORT=3000 SEARXNG_URL=http://localhost:8080 mcp-searxng
+MCP_HTTP_PORT=3000 SEARXNG_URL=http://localhost:8080 bun dist/index.js
 curl http://localhost:3000/health
 ```
-
-</details>
 
 ## Configuration
 
@@ -208,7 +144,7 @@ Full environment variable reference: [CONFIGURATION.md](CONFIGURATION.md)
 
 ### 403 Forbidden from SearXNG
 
-Your SearXNG instance likely has JSON format disabled. Edit `settings.yml` (usually `/etc/searxng/settings.yml`):
+Your SearXNG instance likely has JSON format disabled. Edit `settings.yml`, usually `/etc/searxng/settings.yml`:
 
 ```yaml
 search:
@@ -217,20 +153,35 @@ search:
     - json
 ```
 
-Restart SearXNG (`docker restart searxng`) then verify:
+Restart your SearXNG service, then verify:
 
 ```bash
 curl 'http://localhost:8080/search?q=test&format=json'
 ```
 
-You should receive a JSON response. If not, confirm the file is correctly mounted and YAML indentation is valid.
+You should receive a JSON response. If not, confirm the file is correctly loaded and YAML indentation is valid.
 
-See also: [SearXNG settings docs](https://docs.searxng.org/admin/settings/settings.html) · [discussion](https://github.com/searxng/searxng/discussions/1789)
+See also: [SearXNG settings docs](https://docs.searxng.org/admin/settings/settings.html) and [SearXNG discussion #1789](https://github.com/searxng/searxng/discussions/1789).
+
+## Development
+
+```bash
+bun install
+bun run build
+bun run lint
+bun test tests
+```
+
+Use the MCP inspector:
+
+```bash
+bun run inspector
+```
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE) for details.

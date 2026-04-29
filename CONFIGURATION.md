@@ -67,8 +67,8 @@ Complete MCP client configuration with every variable. Mix and match as needed â
 {
   "mcpServers": {
     "searxng": {
-      "command": "npx",
-      "args": ["-y", "mcp-searxng"],
+      "command": "bun",
+      "args": ["/absolute/path/to/mcp-searxng/dist/index.js"],
       "env": {
         "SEARXNG_URL": "YOUR_SEARXNG_INSTANCE_URL",
         "AUTH_USERNAME": "your_username",
