@@ -3,7 +3,6 @@ import { isIP } from "node:net";
 import { NodeHtmlMarkdown } from "node-html-markdown";
 import { resolveProxyUrl, ProxyType } from "./proxy.js";
 import { logMessage } from "./logging.js";
-import { urlCache } from "./cache.js";
 import { getHttpSecurityConfig } from "./http-security.js";
 import {
   createURLFormatError,
@@ -208,16 +207,6 @@ export async function fetchAndConvertToMarkdown(
   const startTime = Date.now();
   logMessage(mcpServer, "info", `Fetching URL: ${url}`);
 
-  // Check cache first
-  const cachedEntry = urlCache.get(url);
-  if (cachedEntry) {
-    logMessage(mcpServer, "info", `Using cached content for URL: ${url}`);
-    const result = applyPaginationOptions(cachedEntry.markdownContent, paginationOptions);
-    const duration = Date.now() - startTime;
-    logMessage(mcpServer, "info", `Processed cached URL: ${url} (${result.length} chars in ${duration}ms)`);
-    return result;
-  }
-
   // Validate URL format
   let parsedUrl: URL;
   try {
@@ -306,9 +295,6 @@ export async function fetchAndConvertToMarkdown(
       // DON'T cache empty/failed conversions - return warning directly
       return createEmptyContentWarning(url, htmlContent.length, htmlContent);
     }
-
-    // Only cache successful markdown conversion
-    urlCache.set(url, htmlContent, markdownContent);
 
     // Apply pagination options
     const result = applyPaginationOptions(markdownContent, paginationOptions);
