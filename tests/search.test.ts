@@ -22,7 +22,7 @@ describe("performWebSearch", () => {
       process.env.AUTH_PASSWORD = "pass";
       process.env.USER_AGENT = "mcp-searxng-test";
 
-      const fetchMock = mock(async () =>
+      const fetchMock = mock(async (_url: string, _init?: RequestInit) =>
         Response.json({
           results: [
             { title: "Result", content: "Snippet", url: "https://example.com", score: 42 },
@@ -69,7 +69,7 @@ describe("performWebSearch", () => {
     await withCleanEnv(async () => {
       process.env.SEARXNG_URL = "https://searx.example/";
 
-      const fetchMock = mock(async () => Response.json({ results: [] }));
+      const fetchMock = mock(async (_url: string) => Response.json({ results: [] }));
       globalThis.fetch = fetchMock as any;
 
       await performWebSearch(mcpServerStub(), "query", 1, "week", "all", 9);

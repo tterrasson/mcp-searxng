@@ -28,7 +28,7 @@ describe("fetchAndConvertToMarkdown", () => {
         <h2>Next Section</h2>
         <p>Ignore this too.</p>
       `;
-      const fetchMock = mock(async () => new Response(html, { status: 200 }));
+      const fetchMock = mock(async (_url: string, _init?: RequestInit) => new Response(html, { status: 200 }));
       globalThis.fetch = fetchMock as any;
 
       const markdown = await fetchAndConvertToMarkdown(
