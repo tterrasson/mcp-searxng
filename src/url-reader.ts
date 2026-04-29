@@ -109,90 +109,25 @@ function assertUrlAllowed(url: URL): void {
   }
 }
 
-function applyCharacterPagination(content: string, startChar: number = 0, maxLength?: number): string {
-  if (startChar >= content.length) {
-    return "";
+function extractSectionHtml(html: string, heading: string): string | null {
+  const needle = heading.toLowerCase();
+  const { document } = parseHTML(html);
+  const all = Array.from((document as any).querySelectorAll('h1,h2,h3,h4,h5,h6')) as Element[];
+  const target = all.find(h => h.textContent?.toLowerCase().includes(needle));
+  if (!target) return null;
+
+  const level = parseInt(target.tagName[1]);
+  const container = (document as any).createElement('div');
+  container.appendChild(target.cloneNode(true));
+
+  let next = target.nextElementSibling;
+  while (next) {
+    if (/^H[1-6]$/i.test(next.tagName) && parseInt(next.tagName[1]) <= level) break;
+    container.appendChild(next.cloneNode(true));
+    next = next.nextElementSibling;
   }
 
-  const start = Math.max(0, startChar);
-  const end = maxLength ? Math.min(content.length, start + maxLength) : content.length;
-
-  return content.slice(start, end);
-}
-
-function escapeRegExp(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function extractSection(markdownContent: string, sectionHeading: string): string {
-  const lines = markdownContent.split('\n');
-  const sectionRegex = new RegExp(`^#{1,6}\\s*.*${escapeRegExp(sectionHeading)}.*$`, 'i');
-
-  let startIndex = -1;
-  let currentLevel = 0;
-
-  // Find the section start
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (sectionRegex.test(line)) {
-      startIndex = i;
-      currentLevel = (line.match(/^#+/) || [''])[0].length;
-      break;
-    }
-  }
-
-  if (startIndex === -1) {
-    return "";
-  }
-
-  // Find the section end (next heading of same or higher level)
-  let endIndex = lines.length;
-  for (let i = startIndex + 1; i < lines.length; i++) {
-    const line = lines[i];
-    const match = line.match(/^#+/);
-    if (match && match[0].length <= currentLevel) {
-      endIndex = i;
-      break;
-    }
-  }
-
-  return lines.slice(startIndex, endIndex).join('\n');
-}
-
-
-function extractHeadings(markdownContent: string): string {
-  const lines = markdownContent.split('\n');
-  const headings = lines.filter(line => /^#{1,6}\s/.test(line));
-
-  if (headings.length === 0) {
-    return "No headings found in the content.";
-  }
-
-  return headings.join('\n');
-}
-
-function applyPaginationOptions(markdownContent: string, options: PaginationOptions): string {
-  let result = markdownContent;
-
-  // Apply heading extraction first if requested
-  if (options.readHeadings) {
-    return extractHeadings(result);
-  }
-
-  // Apply section extraction
-  if (options.section) {
-    result = extractSection(result, options.section);
-    if (result === "") {
-      return `Section "${options.section}" not found in the content.`;
-    }
-  }
-
-  // Apply character-based pagination last
-  if (options.startChar !== undefined || options.maxLength !== undefined) {
-    result = applyCharacterPagination(result, options.startChar, options.maxLength);
-  }
-
-  return result;
+  return container.innerHTML;
 }
 
 export async function fetchAndConvertToMarkdown(
@@ -292,29 +227,42 @@ export async function fetchAndConvertToMarkdown(
       throw createContentError("Website returned empty content.", url);
     }
 
-    // Convert HTML to Markdown
-    let markdownContent: string;
+    // Parse DOM, extract article, apply DOM-level filters, convert to Markdown
+    let result: string;
     try {
       const { document } = parseHTML(htmlContent);
-      const reader = new Readability(document as unknown as Document);
-      const article = reader.parse();
-      const cleanHtml =
-        article?.content && article.content.trim().length > 0
-          ? article.content
-          : htmlContent;
-      markdownContent = turndownService.turndown(cleanHtml);
+      const article = new Readability(document as unknown as Document).parse();
+      let sourceHtml = article?.content?.trim() ? article.content : htmlContent;
+
+      if (paginationOptions.readHeadings) {
+        const { document: d } = parseHTML(sourceHtml);
+        const hs = Array.from((d as any).querySelectorAll('h1,h2,h3,h4,h5,h6')) as Element[];
+        return hs.length > 0
+          ? hs.map(h => turndownService.turndown(h.outerHTML).trim()).join('\n')
+          : "No headings found in the content.";
+      }
+
+      if (paginationOptions.section) {
+        const extracted = extractSectionHtml(sourceHtml, paginationOptions.section);
+        if (!extracted) return `Section "${paginationOptions.section}" not found in the content.`;
+        sourceHtml = extracted;
+      }
+
+      result = turndownService.turndown(sourceHtml);
     } catch (error: any) {
       throw createConversionError(error, url, htmlContent);
     }
 
-    if (!markdownContent || markdownContent.trim().length === 0) {
+    if (!result || result.trim().length === 0) {
       logMessage(mcpServer, "warning", `Empty content after conversion: ${url}`);
-      // DON'T cache empty/failed conversions - return warning directly
       return createEmptyContentWarning(url, htmlContent.length, htmlContent);
     }
 
-    // Apply pagination options
-    const result = applyPaginationOptions(markdownContent, paginationOptions);
+    if (paginationOptions.startChar !== undefined || paginationOptions.maxLength !== undefined) {
+      const start = Math.max(0, paginationOptions.startChar ?? 0);
+      const end = paginationOptions.maxLength ? Math.min(result.length, start + paginationOptions.maxLength) : result.length;
+      result = start >= result.length ? "" : result.slice(start, end);
+    }
 
     const duration = Date.now() - startTime;
     logMessage(
