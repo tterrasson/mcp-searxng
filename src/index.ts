@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -104,7 +104,7 @@ export function createMcpServer(): McpServer {
     logMessage(mcpServer, "debug", `Handling call_tool request: ${name}`);
 
     try {
-      if (name === "searxng_web_search") {
+      if (name === "web_search") {
         if (!isSearXNGWebSearchArgs(args)) {
           throw new Error("Invalid arguments for web search");
         }
@@ -242,18 +242,12 @@ async function main() {
     }
 
     console.log(`Starting HTTP transport on port ${port}`);
-    const app = await createHttpServer(createMcpServer);
-
-    const httpServer = app.listen(port, () => {
-      console.log(`HTTP server listening on port ${port}`);
-      console.log(`Health check: http://localhost:${port}/health`);
-      console.log(`MCP endpoint: http://localhost:${port}/mcp`);
-    });
+    const server = await createHttpServer(createMcpServer, port);
 
     // Handle graceful shutdown
     const shutdown = (signal: string) => {
       console.log(`Received ${signal}. Shutting down HTTP server...`);
-      httpServer.close(() => {
+      server.stop().then(() => {
         console.log("HTTP server closed");
         process.exit(0);
       });

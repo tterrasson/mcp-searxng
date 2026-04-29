@@ -1,12 +1,12 @@
-FROM node:lts-alpine AS builder
+FROM oven/bun:alpine AS builder
 
 WORKDIR /app
 
 COPY ./ /app
 
-RUN --mount=type=cache,target=/root/.npm npm run bootstrap
+RUN --mount=type=cache,target=/root/.bun/install/cache bun run bootstrap
 
-FROM node:lts-alpine AS release
+FROM oven/bun:alpine AS release
 
 RUN apk update && apk upgrade
 
@@ -14,10 +14,10 @@ WORKDIR /app
 
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/package.json /app/package.json
-COPY --from=builder /app/package-lock.json /app/package-lock.json
+COPY --from=builder /app/bun.lockb /app/bun.lockb
 
 ENV NODE_ENV=production
 
-RUN npm ci --ignore-scripts --omit=dev && npm uninstall -g npm
+RUN bun install --production --ignore-scripts
 
-ENTRYPOINT ["node", "dist/index.js"]
+ENTRYPOINT ["bun", "dist/index.js"]

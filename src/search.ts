@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SearXNGWeb, type SearchResult } from "./types.js";
-import { createProxyAgent, createDefaultAgent, ProxyType } from "./proxy.js";
+import { resolveProxyUrl, ProxyType } from "./proxy.js";
 import { logMessage } from "./logging.js";
 import {
   MCPSearXNGError,
@@ -67,11 +67,9 @@ export async function performWebSearch(
     method: "GET"
   };
 
-  // Add proxy or default dispatcher (includes system CA certs for TLS)
-  const proxyAgent = createProxyAgent(url.toString(), ProxyType.SEARCH);
-  const dispatcher = proxyAgent ?? createDefaultAgent();
-  if (dispatcher) {
-    (requestOptions as any).dispatcher = dispatcher;
+  const proxy = resolveProxyUrl(url.toString(), ProxyType.SEARCH);
+  if (proxy) {
+    (requestOptions as any).proxy = proxy;
   }
 
   // Add basic authentication if credentials are provided
@@ -111,7 +109,7 @@ export async function performWebSearch(
     const context: ErrorContext = {
       url: url.toString(),
       searxngUrl,
-      proxyAgent: !!dispatcher,
+      proxyAgent: !!proxy,
       username
     };
 

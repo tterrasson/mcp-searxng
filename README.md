@@ -56,7 +56,7 @@ AI Assistant (e.g. Claude)
 
 ## Tools
 
-- **searxng_web_search**
+- **web_search**
   - Execute web searches with pagination
   - Inputs:
     - `query` (string): The search query. This string is passed to external search services.

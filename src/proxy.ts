@@ -1,5 +1,3 @@
-import { Agent, ProxyAgent } from "undici";
-import { getConnectOptions } from "./tls-config.js";
 
 /**
  * Checks if a target URL should bypass the proxy based on NO_PROXY environment variable.
@@ -174,30 +172,35 @@ function getProxyUrl(type?: ProxyType, targetUrl?: string): string | undefined {
  * @param type - Optional proxy type ('search' or 'url_reader') for separate proxy configs
  * @returns ProxyAgent dispatcher for fetch, or undefined if no proxy configured or bypassed
  */
-export function createProxyAgent(targetUrl?: string, type?: ProxyType): ProxyAgent | undefined {
+/**
+ * Returns a normalized proxy URL string for use with Bun's native fetch `proxy` option,
+ * or undefined if no proxy is configured or the target URL should bypass the proxy.
+ *
+ * @param targetUrl - Optional target URL to check against NO_PROXY rules and select HTTP/HTTPS proxy
+ * @param type - Optional proxy type ('search' or 'url_reader') for separate proxy configs
+ * @returns Proxy URL string, or undefined if no proxy should be used
+ */
+export function resolveProxyUrl(targetUrl?: string, type?: ProxyType): string | undefined {
   const proxyUrl = getProxyUrl(type, targetUrl);
 
   if (!proxyUrl) {
     return undefined;
   }
 
-  // Check if target URL should bypass proxy
   if (targetUrl && shouldBypassProxy(targetUrl)) {
     return undefined;
   }
 
-  // Validate and normalize proxy URL
   let parsedProxyUrl: URL;
   try {
     parsedProxyUrl = new URL(proxyUrl);
-  } catch (error) {
+  } catch {
     throw new Error(
       `Invalid proxy URL: ${proxyUrl}. ` +
       "Please provide a valid URL (e.g., http://proxy:8080 or http://user:pass@proxy:8080)"
     );
   }
 
-  // Ensure proxy protocol is supported
   if (!['http:', 'https:'].includes(parsedProxyUrl.protocol)) {
     throw new Error(
       `Unsupported proxy protocol: ${parsedProxyUrl.protocol}. ` +
@@ -205,37 +208,8 @@ export function createProxyAgent(targetUrl?: string, type?: ProxyType): ProxyAge
     );
   }
 
-  // Reconstruct base proxy URL preserving credentials
   const auth = parsedProxyUrl.username ?
     (parsedProxyUrl.password ? `${parsedProxyUrl.username}:${parsedProxyUrl.password}@` : `${parsedProxyUrl.username}@`) :
     '';
-  const normalizedProxyUrl = `${parsedProxyUrl.protocol}//${auth}${parsedProxyUrl.host}`;
-
-  // Create and return Undici ProxyAgent compatible with fetch's dispatcher option
-  return new ProxyAgent({ uri: normalizedProxyUrl, connect: getConnectOptions() });
-}
-
-/**
- * Returns a singleton undici Agent with system CA certificates in the connect
- * options. Used as a dispatcher when no proxy is configured, to ensure
- * undici's fetch uses system CAs instead of only Node's compiled-in bundle.
- *
- * The agent (and the CA bundle disk read) is created once and reused across
- * requests to avoid repeated synchronous I/O and connection pool proliferation.
- *
- * Returns undefined if no system CA bundle is found — callers should treat
- * undefined as "use Node's default behavior".
- */
-let _defaultAgentInitialized = false;
-let _defaultAgent: Agent | undefined;
-
-export function createDefaultAgent(): Agent | undefined {
-  if (!_defaultAgentInitialized) {
-    _defaultAgentInitialized = true;
-    const connectOpts = getConnectOptions();
-    if (Object.keys(connectOpts).length > 0) {
-      _defaultAgent = new Agent({ connect: connectOpts });
-    }
-  }
-  return _defaultAgent;
+  return `${parsedProxyUrl.protocol}//${auth}${parsedProxyUrl.host}`;
 }

@@ -23,7 +23,7 @@ export function createConfigResource() {
       currentLogLevel: getCurrentLogLevel()
     },
     capabilities: {
-      tools: ["searxng_web_search", "web_url_read"],
+      tools: ["web_search", "web_url_read"],
       logging: true,
       resources: true,
       transports: process.env.MCP_HTTP_PORT ? ["stdio", "http"] : ["stdio"]
@@ -41,7 +41,7 @@ This is a Model Context Protocol (MCP) server that provides web search capabilit
 
 ## Available Tools
 
-### 1. searxng_web_search
+### 1. web_search
 Performs web searches using the configured SearXNG instance.
 
 **Parameters:**
@@ -87,7 +87,7 @@ For network-exposed HTTP transport, enable:
 
 ### Search for recent news
 \`\`\`
-Tool: searxng_web_search
+Tool: web_search
 Args: {"query": "latest AI developments", "time_range": "day"}
 \`\`\`
 

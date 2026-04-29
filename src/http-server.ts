@@ -1,8 +1,6 @@
-import express from "express";
-import cors from "cors";
 import { randomUUID } from "crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logMessage } from "./logging.js";
 import { packageVersion } from "./index.js";
@@ -14,199 +12,184 @@ import {
 } from "./http-security.js";
 
 interface Session {
-  transport: StreamableHTTPServerTransport;
+  transport: WebStandardStreamableHTTPServerTransport;
   mcpServer: McpServer;
 }
 
+function buildCorsHeaders(
+  origin: string | null,
+  security: ReturnType<typeof getHttpSecurityConfig>
+): Record<string, string> {
+  if (!origin || !isOriginAllowed(origin, security)) return {};
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Expose-Headers": "Mcp-Session-Id",
+    "Access-Control-Allow-Headers": "Content-Type, mcp-session-id, authorization",
+  };
+}
+
+function withCors(response: Response, cors: Record<string, string>): Response {
+  if (Object.keys(cors).length === 0) return response;
+  const headers = new Headers(response.headers);
+  for (const [k, v] of Object.entries(cors)) headers.set(k, v);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export async function createHttpServer(
-  createMcpServer: () => McpServer
-): Promise<express.Application> {
-  const app = express();
+  createMcpServer: () => McpServer,
+  port: number
+): Promise<ReturnType<typeof Bun.serve>> {
   const security = getHttpSecurityConfig();
   validateHttpSecurityConfig(security);
 
-  app.use(express.json());
-
-  // Add CORS support for web clients
-  app.use(cors({
-    origin: (origin, callback) => {
-      if (isOriginAllowed(origin || undefined, security)) {
-        callback(null, true);
-        return;
-      }
-      callback(null, false);
-    },
-    exposedHeaders: ["Mcp-Session-Id"],
-    allowedHeaders: ["Content-Type", "mcp-session-id", "authorization"],
-  }));
-
-  function rejectUnauthorized(res: express.Response) {
-    res.status(401).json({
-      jsonrpc: "2.0",
-      error: {
-        code: -32001,
-        message: "Unauthorized: missing or invalid HTTP auth token",
-      },
-      id: null,
-    });
-  }
-
-  // Map to store sessions by session ID
   const sessions = new Map<string, Session>();
 
-  // Handle POST requests for client-to-server communication
-  app.post('/mcp', async (req, res) => {
-    if (!isRequestAuthorized(req.headers.authorization as string | undefined, security)) {
-      rejectUnauthorized(res);
-      return;
-    }
+  const server = Bun.serve({
+    port,
+    async fetch(req: Request, server) {
+      const url = new URL(req.url);
+      const origin = req.headers.get("origin");
+      const cors = buildCorsHeaders(origin, security);
 
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-    let transport: StreamableHTTPServerTransport;
-    let mcpServer: McpServer;
-
-    if (sessionId && sessions.has(sessionId)) {
-      // Reuse existing session
-      const session = sessions.get(sessionId)!;
-      transport = session.transport;
-      mcpServer = session.mcpServer;
-      logMessage(mcpServer, "debug", `Reusing session: ${sessionId}`);
-    } else if (!sessionId && isInitializeRequest(req.body)) {
-      // New initialization request — create fresh McpServer and transport
-      mcpServer = createMcpServer();
-
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (sessionId) => {
-          sessions.set(sessionId, { transport, mcpServer });
-          logMessage(mcpServer, "debug", `Session initialized: ${sessionId}`);
-        },
-        enableDnsRebindingProtection: security.enableDnsRebindingProtection,
-        allowedHosts: security.allowedHosts,
-        allowedOrigins: security.allowedOrigins,
-      });
-
-      // Clean up session when transport closes
-      transport.onclose = () => {
-        if (transport.sessionId) {
-          sessions.delete(transport.sessionId);
-        }
-      };
-
-      // Connect this session's McpServer to its transport
-      await mcpServer.connect(transport);
-    } else {
-      // Invalid request
-      console.warn(`⚠️  POST request rejected - invalid request:`, {
-        clientIP: req.ip || req.socket.remoteAddress,
-        sessionId: sessionId || 'undefined',
-        hasInitializeRequest: isInitializeRequest(req.body),
-        userAgent: req.headers['user-agent'],
-        contentType: req.headers['content-type'],
-        accept: req.headers['accept']
-      });
-      res.status(400).json({
-        jsonrpc: '2.0',
-        error: {
-          code: -32000,
-          message: 'Bad Request: No valid session ID provided',
-        },
-        id: null,
-      });
-      return;
-    }
-
-    // Handle the request
-    try {
-      await transport.handleRequest(req, res, req.body);
-    } catch (error) {
-      // Log header-related rejections for debugging
-      if (error instanceof Error && error.message.includes('accept')) {
-        console.warn(`⚠️  Connection rejected due to missing headers:`, {
-          clientIP: req.ip || req.socket.remoteAddress,
-          userAgent: req.headers['user-agent'],
-          contentType: req.headers['content-type'],
-          accept: req.headers['accept'],
-          error: error.message
+      if (req.method === "OPTIONS") {
+        return new Response(null, {
+          status: 204,
+          headers: {
+            ...cors,
+            "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+          },
         });
       }
-      throw error;
-    }
+
+      if (url.pathname === "/health" && req.method === "GET") {
+        return Response.json({
+          status: "healthy",
+          server: "ihor-sokoliuk/mcp-searxng",
+          version: packageVersion,
+          transport: "http",
+        });
+      }
+
+      if (url.pathname !== "/mcp") {
+        return new Response("Not Found", { status: 404 });
+      }
+
+      if (!isRequestAuthorized(req.headers.get("authorization") ?? undefined, security)) {
+        return Response.json(
+          { jsonrpc: "2.0", error: { code: -32001, message: "Unauthorized: missing or invalid HTTP auth token" }, id: null },
+          { status: 401, headers: cors }
+        );
+      }
+
+      const sessionId = req.headers.get("mcp-session-id") ?? undefined;
+      const clientIP = server.requestIP(req)?.address;
+
+      if (req.method === "POST") {
+        if (sessionId && sessions.has(sessionId)) {
+          const { transport, mcpServer } = sessions.get(sessionId)!;
+          logMessage(mcpServer, "debug", `Reusing session: ${sessionId}`);
+          try {
+            const response = await transport.handleRequest(req);
+            return withCors(response, cors);
+          } catch (error) {
+            if (error instanceof Error && error.message.includes("accept")) {
+              console.warn(`⚠️  Connection rejected due to missing headers:`, {
+                clientIP,
+                userAgent: req.headers.get("user-agent"),
+                contentType: req.headers.get("content-type"),
+                accept: req.headers.get("accept"),
+                error: error.message,
+              });
+            }
+            throw error;
+          }
+        }
+
+        if (!sessionId) {
+          let body: unknown;
+          try {
+            body = await req.json();
+          } catch {
+            return new Response("Bad Request: invalid JSON body", { status: 400, headers: cors });
+          }
+
+          if (isInitializeRequest(body)) {
+            const mcpServer = createMcpServer();
+            const transport = new WebStandardStreamableHTTPServerTransport({
+              sessionIdGenerator: () => randomUUID(),
+              onsessioninitialized: (id) => {
+                sessions.set(id, { transport, mcpServer });
+                logMessage(mcpServer, "debug", `Session initialized: ${id}`);
+              },
+              onsessionclosed: (id) => {
+                sessions.delete(id);
+              },
+              enableDnsRebindingProtection: security.enableDnsRebindingProtection,
+              allowedHosts: security.allowedHosts,
+              allowedOrigins: security.allowedOrigins,
+            });
+
+            await mcpServer.connect(transport);
+            const response = await transport.handleRequest(req, { parsedBody: body });
+            return withCors(response, cors);
+          }
+        }
+
+        console.warn(`⚠️  POST request rejected - invalid request:`, {
+          clientIP,
+          sessionId: sessionId ?? "undefined",
+          userAgent: req.headers.get("user-agent"),
+          contentType: req.headers.get("content-type"),
+          accept: req.headers.get("accept"),
+        });
+        return Response.json(
+          { jsonrpc: "2.0", error: { code: -32000, message: "Bad Request: No valid session ID provided" }, id: null },
+          { status: 400, headers: cors }
+        );
+      }
+
+      if (req.method === "GET" || req.method === "DELETE") {
+        if (!sessionId || !sessions.has(sessionId)) {
+          console.warn(`⚠️  ${req.method} request rejected - missing or invalid session ID:`, {
+            clientIP,
+            sessionId: sessionId ?? "undefined",
+            userAgent: req.headers.get("user-agent"),
+          });
+          return new Response("Invalid or missing session ID", { status: 400, headers: cors });
+        }
+
+        const { transport } = sessions.get(sessionId)!;
+
+        if (req.method === "DELETE") {
+          const response = await transport.handleRequest(req);
+          sessions.delete(sessionId);
+          return withCors(response, cors);
+        }
+
+        try {
+          const response = await transport.handleRequest(req);
+          return withCors(response, cors);
+        } catch (error) {
+          console.warn(`⚠️  GET request failed:`, {
+            clientIP,
+            sessionId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          throw error;
+        }
+      }
+
+      return new Response("Method Not Allowed", { status: 405, headers: cors });
+    },
   });
 
-  // Handle GET requests for server-to-client notifications via SSE
-  app.get('/mcp', async (req, res) => {
-    if (!isRequestAuthorized(req.headers.authorization as string | undefined, security)) {
-      rejectUnauthorized(res);
-      return;
-    }
+  console.log(`HTTP server listening on port ${port}`);
+  console.log(`Health check: http://localhost:${port}/health`);
+  console.log(`MCP endpoint: http://localhost:${port}/mcp`);
 
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-    if (!sessionId || !sessions.has(sessionId)) {
-      console.warn(`⚠️  GET request rejected - missing or invalid session ID:`, {
-        clientIP: req.ip || req.socket.remoteAddress,
-        sessionId: sessionId || 'undefined',
-        userAgent: req.headers['user-agent']
-      });
-      res.status(400).send('Invalid or missing session ID');
-      return;
-    }
-
-    const session = sessions.get(sessionId)!;
-    try {
-      await session.transport.handleRequest(req, res);
-    } catch (error) {
-      console.warn(`⚠️  GET request failed:`, {
-        clientIP: req.ip || req.socket.remoteAddress,
-        sessionId,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
-    }
-  });
-
-  // Handle DELETE requests for session termination
-  app.delete('/mcp', async (req, res) => {
-    if (!isRequestAuthorized(req.headers.authorization as string | undefined, security)) {
-      rejectUnauthorized(res);
-      return;
-    }
-
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-    if (!sessionId || !sessions.has(sessionId)) {
-      console.warn(`⚠️  DELETE request rejected - missing or invalid session ID:`, {
-        clientIP: req.ip || req.socket.remoteAddress,
-        sessionId: sessionId || 'undefined',
-        userAgent: req.headers['user-agent']
-      });
-      res.status(400).send('Invalid or missing session ID');
-      return;
-    }
-
-    const session = sessions.get(sessionId)!;
-    try {
-      await session.transport.handleRequest(req, res);
-    } catch (error) {
-      console.warn(`⚠️  DELETE request failed:`, {
-        clientIP: req.ip || req.socket.remoteAddress,
-        sessionId,
-        error: error instanceof Error ? error.message : String(error)
-      });
-      throw error;
-    } finally {
-      sessions.delete(sessionId);
-    }
-  });
-
-  // Health check endpoint
-  app.get('/health', (_req, res) => {
-    res.json({
-      status: 'healthy',
-      server: 'ihor-sokoliuk/mcp-searxng',
-      version: packageVersion,
-      transport: 'http'
-    });
-  });
-
-  return app;
+  return server;
 }

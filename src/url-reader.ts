@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { isIP } from "node:net";
 import { NodeHtmlMarkdown } from "node-html-markdown";
-import { createProxyAgent, createDefaultAgent, ProxyType } from "./proxy.js";
+import { resolveProxyUrl, ProxyType } from "./proxy.js";
 import { logMessage } from "./logging.js";
 import { urlCache } from "./cache.js";
 import { getHttpSecurityConfig } from "./http-security.js";
@@ -239,11 +239,9 @@ export async function fetchAndConvertToMarkdown(
       signal: controller.signal,
     };
 
-    // Add proxy or default dispatcher (includes system CA certs for TLS)
-    const proxyAgent = createProxyAgent(url, ProxyType.URL_READER);
-    const dispatcher = proxyAgent ?? createDefaultAgent();
-    if (dispatcher) {
-      (requestOptions as any).dispatcher = dispatcher;
+    const proxy = resolveProxyUrl(url, ProxyType.URL_READER);
+    if (proxy) {
+      (requestOptions as any).proxy = proxy;
     }
 
     // Add User-Agent header if configured (URL_READER_USER_AGENT takes priority over USER_AGENT)
@@ -262,7 +260,7 @@ export async function fetchAndConvertToMarkdown(
     } catch (error: any) {
       const context: ErrorContext = {
         url,
-        proxyAgent: !!dispatcher,
+        proxyAgent: !!proxy,
         timeout: timeoutMs
       };
       throw createNetworkError(error, context);
