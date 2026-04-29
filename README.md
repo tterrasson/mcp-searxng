@@ -2,8 +2,6 @@
 
 An [MCP server](https://modelcontextprotocol.io/introduction) that integrates the [SearXNG](https://docs.searxng.org) API, giving AI assistants web search and URL reading capabilities.
 
-Repository: [github.com/tterrasson/mcp-searxng](https://github.com/tterrasson/mcp-searxng)
-
 ## Quick Start
 
 Install dependencies and build the server with Bun:
@@ -34,7 +32,7 @@ Replace `YOUR_SEARXNG_INSTANCE_URL` with the URL of your SearXNG instance, for e
 ## Features
 
 - **Web Search**: General queries, news, articles, with pagination.
-- **URL Content Reading**: Content extraction powered by [Readability](https://github.com/mozilla/readability) (Firefox Reader Mode) — strips navigation, ads, and boilerplate before converting to Markdown, with pagination, section filtering, and heading extraction.
+- **URL Content Reading**: Content extraction powered by [Readability](https://github.com/mozilla/readability) (Firefox Reader Mode). Strips navigation, ads, and boilerplate before converting to Markdown, with pagination, section filtering, and heading extraction.
 - **Pagination**: Control which page of results to retrieve.
 - **Time Filtering**: Filter results by time range: day, month, or year.
 - **Language Selection**: Filter results by preferred language.
