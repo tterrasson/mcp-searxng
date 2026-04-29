@@ -23,30 +23,25 @@ export function createConfigurationError(message: string): MCPSearXNGError {
   return new MCPSearXNGError(`🔧 Configuration Error: ${message}`);
 }
 
-const TLS_ERROR_CODES = new Set([
-  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
-  'CERT_UNTRUSTED', 'CERT_HAS_EXPIRED', 'DEPTH_ZERO_SELF_SIGNED_CERT',
-  'SELF_SIGNED_CERT_IN_CHAIN', 'UNABLE_TO_GET_ISSUER_CERT',
-  'CERT_CHAIN_TOO_LONG', 'INVALID_CA',
-]);
+const isTLSError = (error: any): boolean => {
+  const codes = new Set<string>();
+  if (error?.code) codes.add(error.code);
+  if (error?.cause?.code) codes.add(error.cause.code);
 
-function isTLSError(error: any): boolean {
-  if (TLS_ERROR_CODES.has(error?.code)) return true;
-  if (TLS_ERROR_CODES.has(error?.cause?.code)) return true;
-  if (error?.message?.includes('certificate')) return true;
-  if (error?.cause?.message?.includes('certificate')) return true;
-  return false;
-}
+  const isKnownCode = Array.from(codes).some(code =>
+    code.startsWith('ERR_TLS_') ||
+    code.startsWith('ERR_SSL_') ||
+    ['CERT_HAS_EXPIRED', 'DEPTH_ZERO_SELF_SIGNED_CERT', 'SELF_SIGNED_CERT_IN_CHAIN'].includes(code)
+  );
+
+  if (isKnownCode) return true;
+
+  const message = (error?.message || error?.cause?.message || '').toLowerCase();
+  return /certificate|tls|ssl|handshake/i.test(message);
+};
 
 function getTLSRemediationMessage(): string {
-  const { platform } = process;
-  if (platform === 'win32') {
-    return 'Set NODE_EXTRA_CA_CERTS=C:\\path\\to\\ca-bundle.pem before starting the server.';
-  }
-  if (platform === 'darwin') {
-    return 'Run: sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /path/to/ca.crt';
-  }
-  return 'Run: sudo cp /path/to/ca.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates';
+  return 'Check your CA certificates, proxy settings, or system clock.';
 }
 
 export function createNetworkError(error: any, context: ErrorContext): MCPSearXNGError {
