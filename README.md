@@ -35,7 +35,6 @@ Replace `YOUR_SEARXNG_INSTANCE_URL` with the URL of your SearXNG instance, for e
 
 - **Web Search**: General queries, news, articles, with pagination.
 - **URL Content Reading**: Content extraction with pagination, section filtering, and heading extraction.
-- **Intelligent Caching**: URL content is cached with TTL to improve performance and reduce redundant requests.
 - **Pagination**: Control which page of results to retrieve.
 - **Time Filtering**: Filter results by time range: day, month, or year.
 - **Language Selection**: Filter results by preferred language.

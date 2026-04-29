@@ -53,10 +53,10 @@ function isPrivateIPv6(hostname: string): boolean {
 
   if (isIP(addr) !== 6) return false;
 
-  if (addr === "::1") return true;                        // loopback
-  if (addr === "::") return true;                         // unspecified
-  if (/^f[cd]/i.test(addr)) return true;                 // ULA fc00::/7
-  if (/^fe[89ab][0-9a-f]:/i.test(addr)) return true;    // link-local fe80::/10
+  if (addr === "::1") return true; // loopback
+  if (addr === "::") return true; // unspecified
+  if (/^f[cd]/i.test(addr)) return true; // ULA fc00::/7
+  if (/^fe[89ab][0-9a-f]:/i.test(addr)) return true; // link-local fe80::/10
 
   // IPv4-mapped ::ffff:<ipv4> — delegate to the IPv4 check
   const mapped = addr.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/);
@@ -265,6 +265,19 @@ export async function fetchAndConvertToMarkdown(
 
       const context: ErrorContext = { url };
       throw createServerError(response.status, response.statusText, responseBody, context);
+    }
+
+    // Check if the content is likely binary
+    const contentType = response.headers.get("content-type");
+
+    if (contentType) {
+      const isTextLike = contentType.includes("text/") ||
+        contentType.includes("xml") ||
+        contentType.includes("json") ||
+        contentType.includes("javascript");
+      if (!isTextLike) {
+        throw createContentError(`URL returned binary or non-text content (${contentType}).`, url);
+      }
     }
 
     // Retrieve HTML content
