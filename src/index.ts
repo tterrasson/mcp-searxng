@@ -143,11 +143,15 @@ export function createMcpServer(): McpServer {
         throw new Error(`Unknown tool: ${name}`);
       }
     } catch (error) {
-      logMessage(mcpServer, "error", `Tool execution error: ${error instanceof Error ? error.message : String(error)}`, {
-        tool: name,
-        args: args,
-        error: error instanceof Error ? error.stack : String(error)
-      });
+      logMessage(
+        mcpServer,
+        "error",
+        `Tool execution error: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          tool: name,
+          args: args,
+          error: error instanceof Error ? error.stack : String(error)
+        });
       throw error;
     }
   });

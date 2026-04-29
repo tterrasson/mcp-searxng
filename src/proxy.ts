@@ -209,7 +209,9 @@ export function resolveProxyUrl(targetUrl?: string, type?: ProxyType): string | 
   }
 
   const auth = parsedProxyUrl.username ?
-    (parsedProxyUrl.password ? `${parsedProxyUrl.username}:${parsedProxyUrl.password}@` : `${parsedProxyUrl.username}@`) :
-    '';
+    (
+      parsedProxyUrl.password
+        ? `${parsedProxyUrl.username}:${parsedProxyUrl.password}@` : `${parsedProxyUrl.username}@`
+    ) : '';
   return `${parsedProxyUrl.protocol}//${auth}${parsedProxyUrl.host}`;
 }

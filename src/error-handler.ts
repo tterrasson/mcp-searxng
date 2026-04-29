@@ -80,11 +80,18 @@ export function createNetworkError(error: any, context: ErrorContext): MCPSearXN
   return new MCPSearXNGError(`🌐 Network Error: ${errorMsg}`);
 }
 
-export function createServerError(status: number, statusText: string, responseBody: string, context: ErrorContext): MCPSearXNGError {
+export function createServerError(
+  status: number,
+  statusText: string,
+  responseBody: string,
+  context: ErrorContext,
+): MCPSearXNGError {
   const target = context.searxngUrl ? 'SearXNG server' : 'Website';
 
   if (status === 403) {
-    const reason = context.searxngUrl ? 'Authentication required or IP blocked' : 'Access blocked (bot detection or geo-restriction)';
+    const reason = context.searxngUrl
+      ? 'Authentication required or IP blocked'
+      : 'Access blocked (bot detection or geo-restriction)';
     return new MCPSearXNGError(`🚫 ${target} Error (${status}): ${reason}`);
   }
 
@@ -114,7 +121,8 @@ export function createDataError(data: any, context: ErrorContext): MCPSearXNGErr
 }
 
 export function createNoResultsMessage(query: string): string {
-  return `🔍 No results found for "${query}". Try different search terms or check if SearXNG search engines are working.`;
+  return `🔍 No results found for "${query}". ` +
+    `Try different search terms or check if SearXNG search engines are working.`;
 }
 
 export function createURLFormatError(url: string): MCPSearXNGError {
@@ -142,7 +150,8 @@ export function createTimeoutError(timeout: number, url: string): MCPSearXNGErro
 }
 
 export function createEmptyContentWarning(url: string, htmlLength: number, htmlPreview: string): string {
-  return `📄 Content Warning: Page fetched but appears empty after conversion (${url}). May contain only media or require JavaScript.`;
+  return `📄 Content Warning: Page fetched but appears empty after conversion (${url}). ` +
+    `May contain only media or require JavaScript.`;
 }
 
 export function createUnexpectedError(error: any, context: ErrorContext): MCPSearXNGError {
@@ -179,5 +188,6 @@ export function validateEnvironment(): string | null {
     return null;
   }
 
-  return `⚠️ Configuration Issues: ${issues.join(', ')}. Set SEARXNG_URL (e.g., http://localhost:8080 or https://search.example.com)`;
+  return `⚠️ Configuration Issues: ${issues.join(', ')}. ` +
+    `Set SEARXNG_URL (e.g., http://localhost:8080 or https://search.example.com)`;
 }

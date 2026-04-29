@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { WebStandardStreamableHTTPServerTransport } from
+  "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { logMessage } from "./logging.js";
 import {
@@ -78,7 +79,11 @@ export async function createHttpServer(
 
       if (!isRequestAuthorized(req.headers.get("authorization") ?? undefined, security)) {
         return Response.json(
-          { jsonrpc: "2.0", error: { code: -32001, message: "Unauthorized: missing or invalid HTTP auth token" }, id: null },
+          {
+            jsonrpc: "2.0",
+            error: { code: -32001, message: "Unauthorized: missing or invalid HTTP auth token" },
+            id: null
+          },
           { status: 401, headers: cors }
         );
       }

@@ -313,7 +313,12 @@ export async function fetchAndConvertToMarkdown(
     const result = applyPaginationOptions(markdownContent, paginationOptions);
 
     const duration = Date.now() - startTime;
-    logMessage(mcpServer, "info", `Successfully fetched and converted URL: ${url} (${result.length} chars in ${duration}ms)`);
+    logMessage(
+      mcpServer,
+      "info",
+      `Successfully fetched and converted URL: ${url} (${result.length} chars in ${duration}ms)`
+    );
+
     return result;
   } catch (error: any) {
     if (error.name === "AbortError") {

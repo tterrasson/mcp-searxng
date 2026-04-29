@@ -15,7 +15,10 @@ export function createConfigResource() {
         ? { searxngUrl: process.env.SEARXNG_URL || "(not configured)" }
         : { searxngUrlConfigured: !!process.env.SEARXNG_URL }),
       hasAuth: !!(process.env.AUTH_USERNAME && process.env.AUTH_PASSWORD),
-      hasProxy: !!(process.env.HTTP_PROXY || process.env.HTTPS_PROXY || process.env.http_proxy || process.env.https_proxy),
+      hasProxy: !!(
+        process.env.HTTP_PROXY || process.env.HTTPS_PROXY ||
+        process.env.http_proxy || process.env.https_proxy
+      ),
       hasNoProxy: !!(process.env.NO_PROXY || process.env.no_proxy),
       nodeVersion: process.version,
       currentLogLevel: getCurrentLogLevel()
@@ -35,7 +38,8 @@ export function createHelpResource() {
   return `# SearXNG MCP Server Help
 
 ## Overview
-This is a Model Context Protocol (MCP) server that provides web search capabilities through SearXNG and URL content reading functionality.
+This is a Model Context Protocol (MCP) server that provides web search
+capabilities through SearXNG and URL content reading functionality.
 
 ## Available Tools
 
