@@ -119,10 +119,6 @@ export const READ_URL_TOOL: Tool = {
         type: "string",
         description: "Extract content under a specific heading (searches for heading text)",
       },
-      paragraphRange: {
-        type: "string",
-        description: "Return specific paragraph ranges (e.g., '1-5', '3', '10-')",
-      },
       readHeadings: {
         type: "boolean",
         description: "Return only a list of headings instead of full content",

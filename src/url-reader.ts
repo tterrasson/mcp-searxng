@@ -1,6 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { isIP } from "node:net";
-import { NodeHtmlMarkdown } from "node-html-markdown";
+import { Readability } from '@mozilla/readability';
+import { parseHTML } from 'linkedom';
+import TurndownService from 'turndown';
 import { resolveProxyUrl, ProxyType } from "./proxy.js";
 import { logMessage } from "./logging.js";
 import { getHttpSecurityConfig } from "./http-security.js";
@@ -17,11 +19,29 @@ import {
   type ErrorContext
 } from "./error-handler.js";
 
+const turndownService = new TurndownService({
+  headingStyle: 'atx',
+  bulletListMarker: '-',
+  codeBlockStyle: 'fenced',
+});
+
+turndownService.addRule('images', {
+  filter: 'img',
+  replacement: (_content, node) => {
+    const alt = (node as Element).getAttribute('alt')?.trim() ?? '';
+    return alt;
+  },
+});
+
+turndownService.addRule('media', {
+  filter: ['video', 'audio'],
+  replacement: () => '',
+});
+
 interface PaginationOptions {
   startChar?: number;
   maxLength?: number;
   section?: string;
-  paragraphRange?: string;
   readHeadings?: boolean;
 }
 
@@ -126,34 +146,6 @@ function extractSection(markdownContent: string, sectionHeading: string): string
   return lines.slice(startIndex, endIndex).join('\n');
 }
 
-function extractParagraphRange(markdownContent: string, range: string): string {
-  const paragraphs = markdownContent.split('\n\n').filter(p => p.trim().length > 0);
-
-  // Parse range (e.g., "1-5", "3", "10-")
-  const rangeMatch = range.match(/^(\d+)(?:-(\d*))?$/);
-  if (!rangeMatch) {
-    return "";
-  }
-
-  const start = parseInt(rangeMatch[1]) - 1; // Convert to 0-based index
-  const endStr = rangeMatch[2];
-
-  if (start < 0 || start >= paragraphs.length) {
-    return "";
-  }
-
-  if (endStr === undefined) {
-    // Single paragraph (e.g., "3")
-    return paragraphs[start] || "";
-  } else if (endStr === "") {
-    // Range to end (e.g., "10-")
-    return paragraphs.slice(start).join('\n\n');
-  } else {
-    // Specific range (e.g., "1-5")
-    const end = parseInt(endStr);
-    return paragraphs.slice(start, end).join('\n\n');
-  }
-}
 
 function extractHeadings(markdownContent: string): string {
   const lines = markdownContent.split('\n');
@@ -179,14 +171,6 @@ function applyPaginationOptions(markdownContent: string, options: PaginationOpti
     result = extractSection(result, options.section);
     if (result === "") {
       return `Section "${options.section}" not found in the content.`;
-    }
-  }
-
-  // Apply paragraph range filtering
-  if (options.paragraphRange) {
-    result = extractParagraphRange(result, options.paragraphRange);
-    if (result === "") {
-      return `Paragraph range "${options.paragraphRange}" is invalid or out of bounds.`;
     }
   }
 
@@ -298,7 +282,14 @@ export async function fetchAndConvertToMarkdown(
     // Convert HTML to Markdown
     let markdownContent: string;
     try {
-      markdownContent = NodeHtmlMarkdown.translate(htmlContent);
+      const { document } = parseHTML(htmlContent);
+      const reader = new Readability(document as unknown as Document);
+      const article = reader.parse();
+      const cleanHtml =
+        article?.content && article.content.trim().length > 0
+          ? article.content
+          : htmlContent;
+      markdownContent = turndownService.turndown(cleanHtml);
     } catch (error: any) {
       throw createConversionError(error, url, htmlContent);
     }

@@ -34,7 +34,7 @@ Replace `YOUR_SEARXNG_INSTANCE_URL` with the URL of your SearXNG instance, for e
 ## Features
 
 - **Web Search**: General queries, news, articles, with pagination.
-- **URL Content Reading**: Content extraction with pagination, section filtering, and heading extraction.
+- **URL Content Reading**: Content extraction powered by [Readability](https://github.com/mozilla/readability) (Firefox Reader Mode) — strips navigation, ads, and boilerplate before converting to Markdown, with pagination, section filtering, and heading extraction.
 - **Pagination**: Control which page of results to retrieve.
 - **Time Filtering**: Filter results by time range: day, month, or year.
 - **Language Selection**: Filter results by preferred language.
@@ -80,7 +80,6 @@ Inputs:
 - `startChar` (number, optional): Starting character position for content extraction. Default: `0`.
 - `maxLength` (number, optional): Maximum number of characters to return.
 - `section` (string, optional): Extract content under a specific heading.
-- `paragraphRange` (string, optional): Return specific paragraph ranges, for example `1-5`, `3`, or `10-`.
 - `readHeadings` (boolean, optional): Return only a list of headings instead of full content.
 
 ## Installation

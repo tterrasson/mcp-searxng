@@ -25,7 +25,6 @@ export function isWebUrlReadArgs(args: unknown): args is {
   startChar?: number;
   maxLength?: number;
   section?: string;
-  paragraphRange?: string;
   readHeadings?: boolean;
 } {
   if (
@@ -41,7 +40,6 @@ export function isWebUrlReadArgs(args: unknown): args is {
 
   // Convert empty strings to undefined for optional string parameters
   if (urlArgs.section === "") urlArgs.section = undefined;
-  if (urlArgs.paragraphRange === "") urlArgs.paragraphRange = undefined;
 
   // Validate optional parameters
   if (urlArgs.startChar !== undefined && (typeof urlArgs.startChar !== "number" || urlArgs.startChar < 0)) {
@@ -51,9 +49,6 @@ export function isWebUrlReadArgs(args: unknown): args is {
     return false;
   }
   if (urlArgs.section !== undefined && typeof urlArgs.section !== "string") {
-    return false;
-  }
-  if (urlArgs.paragraphRange !== undefined && typeof urlArgs.paragraphRange !== "string") {
     return false;
   }
   if (urlArgs.readHeadings !== undefined && typeof urlArgs.readHeadings !== "boolean") {
@@ -125,7 +120,6 @@ export function createMcpServer(): McpServer {
           startChar: args.startChar,
           maxLength: args.maxLength,
           section: args.section,
-          paragraphRange: args.paragraphRange,
           readHeadings: args.readHeadings,
         };
 
