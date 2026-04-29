@@ -109,7 +109,7 @@ export function createMcpServer(): McpServer {
           throw new Error("Invalid arguments for web search");
         }
 
-        const result = await performWebSearch(
+        const results = await performWebSearch(
           mcpServer,
           args.query,
           args.pageno,
@@ -119,12 +119,8 @@ export function createMcpServer(): McpServer {
         );
 
         return {
-          content: [
-            {
-              type: "text",
-              text: result,
-            },
-          ],
+          content: [{ type: "text" as const, text: "" }],
+          structuredContent: { results },
         };
       } else if (name === "web_url_read") {
         if (!isWebUrlReadArgs(args)) {

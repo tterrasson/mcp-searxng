@@ -1,12 +1,14 @@
 import { Tool } from "@modelcontextprotocol/sdk/types.js";
 
+export interface SearchResult {
+  title: string;
+  content: string;
+  url: string;
+  score: number;
+}
+
 export interface SearXNGWeb {
-  results: Array<{
-    title: string;
-    content: string;
-    url: string;
-    score: number;
-  }>;
+  results: SearchResult[];
 }
 
 export function isSearXNGWebSearchArgs(args: unknown): args is {
@@ -25,13 +27,31 @@ export function isSearXNGWebSearchArgs(args: unknown): args is {
 }
 
 export const WEB_SEARCH_TOOL: Tool = {
-  name: "searxng_web_search",
+  name: "web_search",
   description:
-    "Performs a web search using the SearXNG API, ideal for general queries, news, articles, and online content. " +
+    "Performs a web search, ideal for general queries, news, articles, and online content. " +
     "Use this for broad information gathering, recent events, or when you need diverse web sources.",
   annotations: {
     readOnlyHint: true,
     openWorldHint: true,
+  },
+  outputSchema: {
+    type: "object",
+    properties: {
+      results: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            content: { type: "string" },
+            url: { type: "string" },
+            score: { type: "number" },
+          }
+        },
+      },
+    },
+    required: ["results"],
   },
   inputSchema: {
     type: "object",

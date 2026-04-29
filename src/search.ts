@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SearXNGWeb } from "./types.js";
+import { SearXNGWeb, type SearchResult } from "./types.js";
 import { createProxyAgent, createDefaultAgent, ProxyType } from "./proxy.js";
 import { logMessage } from "./logging.js";
 import {
@@ -9,7 +9,6 @@ import {
   createServerError,
   createJSONError,
   createDataError,
-  createNoResultsMessage,
   type ErrorContext
 } from "./error-handler.js";
 
@@ -20,7 +19,7 @@ export async function performWebSearch(
   time_range?: string,
   language: string = "all",
   safesearch?: number
-) {
+): Promise<SearchResult[]> {
   const startTime = Date.now();
 
   // Build detailed log message with all parameters
@@ -102,13 +101,20 @@ export async function performWebSearch(
     logMessage(mcpServer, "info", `Making request to: ${url.toString()}`);
     response = await fetch(url.toString(), requestOptions);
   } catch (error: any) {
-    logMessage(mcpServer, "error", `Network error during search request: ${error.message}`, { query, url: url.toString() });
+    logMessage(
+      mcpServer,
+      "error",
+      `Network error during search request: ${error.message}`,
+      { query, url: url.toString() }
+    );
+
     const context: ErrorContext = {
       url: url.toString(),
       searxngUrl,
       proxyAgent: !!dispatcher,
       username
     };
+
     throw createNetworkError(error, context);
   }
 
@@ -124,6 +130,7 @@ export async function performWebSearch(
       url: url.toString(),
       searxngUrl
     };
+
     throw createServerError(response.status, response.statusText, responseBody, context);
   }
 
@@ -155,15 +162,12 @@ export async function performWebSearch(
     score: result.score || 0,
   }));
 
-  if (results.length === 0) {
-    logMessage(mcpServer, "info", `No results found for query: "${query}"`);
-    return createNoResultsMessage(query);
-  }
-
   const duration = Date.now() - startTime;
-  logMessage(mcpServer, "info", `Search completed: "${query}" (${searchParams}) - ${results.length} results in ${duration}ms`);
+  logMessage(
+    mcpServer,
+    "info",
+    `Search completed: "${query}" (${searchParams}) - ${results.length} results in ${duration}ms`
+  );
 
-  return results
-    .map((r) => `Title: ${r.title}\nDescription: ${r.content}\nURL: ${r.url}\nRelevance Score: ${r.score.toFixed(3)}`)
-    .join("\n\n");
+  return results;
 }
