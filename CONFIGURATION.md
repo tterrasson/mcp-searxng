@@ -33,6 +33,12 @@ Interface-specific proxies take priority over global proxies for their respectiv
 | `URL_READER_HTTP_PROXY` / `URL_READER_HTTPS_PROXY` | No | — | Proxy for `web_url_read` only |
 | `NO_PROXY` | No | — | Comma-separated bypass list (e.g. `localhost,.internal,example.com`) |
 
+## Compatibility
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `PLAIN_TEXT_CONTENT` | No | — | Set to any non-empty value to also return search results as plain text in the MCP `content` field. Useful for clients that do not support `structuredContent` (e.g. LM Studio). `structuredContent` is always returned regardless. |
+
 ## HTTP Transport
 
 By default the server communicates over STDIO. Set `MCP_HTTP_PORT` to enable HTTP mode instead.

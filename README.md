@@ -129,6 +129,19 @@ curl http://localhost:3000/health
 
 Set `SEARXNG_URL` to your SearXNG instance URL. All other variables are optional.
 
+### Client compatibility (`PLAIN_TEXT_CONTENT`)
+
+By default, `web_search` returns results only via `structuredContent` (the MCP structured data field). Clients that do not support `structuredContent` — such as LM Studio — will see an empty response.
+
+Set `PLAIN_TEXT_CONTENT` to any non-empty value to also include results as plain text in the standard `content` field:
+
+```json
+"env": {
+  "SEARXNG_URL": "YOUR_SEARXNG_INSTANCE_URL",
+  "PLAIN_TEXT_CONTENT": "true"
+}
+```
+
 Full environment variable reference: [CONFIGURATION.md](CONFIGURATION.md)
 
 ## Troubleshooting

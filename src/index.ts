@@ -14,7 +14,7 @@ import {
 // Import modularized functionality
 import { WEB_SEARCH_TOOL, READ_URL_TOOL, isSearXNGWebSearchArgs } from "./types.js";
 import { logMessage, setLogLevel, getCurrentLogLevel } from "./logging.js";
-import { performWebSearch } from "./search.js";
+import { performWebSearch, formatSearchResults } from "./search.js";
 import { fetchAndConvertToMarkdown } from "./url-reader.js";
 import { createConfigResource, createHelpResource } from "./resources.js";
 import { createHttpServer } from "./http-server.js";
@@ -71,6 +71,7 @@ export function createMcpServer(): McpServer {
     },
     {
       capabilities: {
+        completions: {},
         logging: {},
         resources: {},
         tools: {},
@@ -109,7 +110,9 @@ export function createMcpServer(): McpServer {
         );
 
         return {
-          content: [],
+          content: process.env.PLAIN_TEXT_CONTENT
+            ? [{ type: "text" as const, text: formatSearchResults(results) }]
+            : [],
           structuredContent: { results },
         };
       } else if (name === "web_url_read") {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
-import { performWebSearch } from "../src/search.js";
+import { performWebSearch, formatSearchResults } from "../src/search.js";
 import { withCleanEnv } from "./env.js";
 
 const originalFetch = globalThis.fetch;
@@ -12,6 +12,39 @@ function mcpServerStub() {
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
+});
+
+describe("formatSearchResults", () => {
+  test("returns fallback message for empty results", () => {
+    expect(formatSearchResults([])).toBe("No results found.");
+  });
+
+  test("formats a single result with all fields", () => {
+    const output = formatSearchResults([
+      { title: "Bun Runtime", url: "https://bun.sh", score: 0.95, content: "Fast JS runtime." },
+    ]);
+    expect(output).toBe(
+      "1. Bun Runtime\n   URL: https://bun.sh\n   Score: 0.95\n   Fast JS runtime."
+    );
+  });
+
+  test("formats multiple results separated by blank lines", () => {
+    const output = formatSearchResults([
+      { title: "First", url: "https://first.com", score: 0.9, content: "First result." },
+      { title: "Second", url: "https://second.com", score: 0.7, content: "Second result." },
+    ]);
+    const parts = output.split("\n\n");
+    expect(parts).toHaveLength(2);
+    expect(parts[0]).toStartWith("1. First");
+    expect(parts[1]).toStartWith("2. Second");
+  });
+
+  test("handles results with empty content gracefully", () => {
+    const output = formatSearchResults([
+      { title: "No Snippet", url: "https://example.com", score: 0.5, content: "" },
+    ]);
+    expect(output).toBe("1. No Snippet\n   URL: https://example.com\n   Score: 0.5\n   ");
+  });
 });
 
 describe("performWebSearch", () => {

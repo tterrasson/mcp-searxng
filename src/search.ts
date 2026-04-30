@@ -174,3 +174,12 @@ export async function performWebSearch(
 
   return results;
 }
+
+export function formatSearchResults(results: SearchResult[]): string {
+  if (results.length === 0) return "No results found.";
+  return results
+    .map((r, i) =>
+      `${i + 1}. ${r.title}\n   URL: ${r.url}\n   Score: ${r.score}\n   ${r.content}`
+    )
+    .join("\n\n");
+}
