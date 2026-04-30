@@ -262,6 +262,27 @@ async function main() {
       console.error("📡 Waiting for MCP client connection via STDIO...\n");
     }
 
+    // Graceful shutdown for STDIO mode — prevents orphaned processes when the
+    // parent (e.g. Claude Code) exits without propagating signals through npx layers.
+    let shuttingDown = false;
+
+    const shutdownStdio = async () => {
+      if (shuttingDown) return;
+
+      shuttingDown = true;
+      await mcpServer.close();
+      process.exit(0);
+    };
+
+    // Register handlers before connect() to avoid a race where the parent dies during startup
+    process.once("SIGTERM", shutdownStdio);
+    process.once("SIGINT", shutdownStdio);
+    process.once("SIGHUP", shutdownStdio);
+
+    // MCP spec: server should exit when stdin closes
+    process.stdin.once("end", shutdownStdio);
+    process.stdin.once("close", shutdownStdio);
+
     const transport = new StdioServerTransport();
     await mcpServer.connect(transport);
 
