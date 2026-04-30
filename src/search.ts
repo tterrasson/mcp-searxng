@@ -12,6 +12,11 @@ import {
   type ErrorContext
 } from "./error-handler.js";
 
+// SearXNG scores can have many decimal places; cap at 2 for readability
+function roundScore(score: number): number {
+  return Math.round(score * 100) / 100;
+}
+
 export async function performWebSearch(
   mcpServer: McpServer,
   query: string,
@@ -157,7 +162,7 @@ export async function performWebSearch(
     title: result.title || "",
     content: result.content || "",
     url: result.url || "",
-    score: result.score || 0,
+    score: roundScore(result.score || 0),
   }));
 
   const duration = Date.now() - startTime;
