@@ -109,7 +109,7 @@ export function createMcpServer(): McpServer {
         );
 
         return {
-          content: [{ type: "text" as const, text: "" }],
+          content: [],
           structuredContent: { results },
         };
       } else if (name === "web_url_read") {
@@ -127,12 +127,7 @@ export function createMcpServer(): McpServer {
         const result = await fetchAndConvertToMarkdown(mcpServer, args.url, 10000, paginationOptions);
 
         return {
-          content: [
-            {
-              type: "text",
-              text: result,
-            },
-          ],
+          content: [{ type: "text", text: result }]
         };
       } else {
         throw new Error(`Unknown tool: ${name}`);
