@@ -1,5 +1,5 @@
 {
-    "name": "mcp-searxng",
+    "name": "@tterrasson/mcp-searxng",
     "version": "1.0.3",
     "mcpName": "io.github.tterrasson/mcp-searxng",
     "description": "MCP server for SearXNG integration",
