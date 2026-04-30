@@ -32,6 +32,7 @@ Replace `YOUR_SEARXNG_INSTANCE_URL` with the URL of your SearXNG instance, for e
 - **Time Filtering**: Filter results by time range: day, month, or year.
 - **Language Selection**: Filter results by preferred language.
 - **Safe Search**: Control the search result filtering level.
+- **Category Filtering**: Restrict results to specific engine types (news, images, science, etc.).
 
 ## How It Works
 
@@ -62,6 +63,7 @@ Inputs:
 - `time_range` (string, optional): Filter results by time range. One of `day`, `month`, `year`.
 - `language` (string, optional): Language code for results, for example `en`, `fr`, `de`, or `all`. Default: `all`.
 - `safesearch` (number, optional): Safe search filter level, where `0` is none, `1` is moderate, and `2` is strict. Defaults to the SearXNG instance setting.
+- `categories` (string, optional): Comma-separated list of search categories to filter results by engine type. Available values: `general`, `images`, `videos`, `news`, `map`, `music`, `it`, `science`, `files`, `social media`. Defaults to the SearXNG instance setting.
 
 ### web_url_read
 
