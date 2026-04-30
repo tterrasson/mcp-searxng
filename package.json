@@ -35,7 +35,8 @@
         "bun": ">=1.0"
     },
     "scripts": {
-        "build": "tsc && chmod +x dist/*.js",
+        "build": "bun build src/index.ts --outfile dist/index.js --target bun",
+        "typecheck": "tsc --noEmit",
         "watch": "bun --watch src/index.ts",
         "test": "bun test tests --reporter=dots --only-failures",
         "test:coverage": "bun test --coverage tests",

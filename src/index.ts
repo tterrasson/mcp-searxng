@@ -18,6 +18,7 @@ import { performWebSearch } from "./search.js";
 import { fetchAndConvertToMarkdown } from "./url-reader.js";
 import { createConfigResource, createHelpResource } from "./resources.js";
 import { createHttpServer } from "./http-server.js";
+import { version } from "../package.json";
 
 // Type guard for URL reading args
 export function isWebUrlReadArgs(args: unknown): args is {
@@ -66,7 +67,7 @@ export function createMcpServer(): McpServer {
   const mcpServer = new McpServer(
     {
       name: "tterrasson/mcp-searxng",
-      version: process.env.npm_package_version ?? "0.0.0",
+      version,
     },
     {
       capabilities: {

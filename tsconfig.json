@@ -8,10 +8,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "outDir": "./dist",
-    "rootDir": ".",
+    "noEmit": true,
     "isolatedModules": true,
-    "declaration": true,
     "types": ["bun-types"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"],
