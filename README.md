@@ -4,21 +4,16 @@ An [MCP server](https://modelcontextprotocol.io/introduction) that integrates th
 
 ## Quick Start
 
-Install dependencies and build the server with Bun:
+Requires [Bun](https://bun.com/docs/installation).
 
-```bash
-bun install
-bun run build
-```
-
-Add the built server to your MCP client configuration, replacing the path with your local clone:
+Add the server to your MCP client configuration:
 
 ```json
 {
   "mcpServers": {
     "searxng": {
-      "command": "bun",
-      "args": ["/absolute/path/to/mcp-searxng/dist/index.js"],
+      "command": "bunx",
+      "args": ["@tterrasson/mcp-searxng"],
       "env": {
         "SEARXNG_URL": "YOUR_SEARXNG_INSTANCE_URL"
       }
