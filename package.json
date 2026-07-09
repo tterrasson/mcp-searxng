@@ -48,16 +48,16 @@
     "dependencies": {
         "@modelcontextprotocol/sdk": "1.29.0",
         "@mozilla/readability": "^0.6.0",
-        "linkedom": "^0.18.12",
+        "linkedom": "^0.18.13",
         "turndown": "^7.2.4"
     },
     "devDependencies": {
         "bun-types": "latest",
         "@types/mozilla__readability": "^0.4.2",
         "@types/turndown": "^5.0.6",
-        "@typescript-eslint/eslint-plugin": "^8.58.0",
-        "@typescript-eslint/parser": "^8.58.0",
-        "eslint": "^10.1.0",
-        "typescript": "^5.8.3"
+        "@typescript-eslint/eslint-plugin": "^8.63.0",
+        "@typescript-eslint/parser": "^8.63.0",
+        "eslint": "^10.6.0",
+        "typescript": "^5.9.3"
     }
 }
